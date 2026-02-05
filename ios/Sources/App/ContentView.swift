@@ -27,8 +27,10 @@ struct WebContainer: UIViewRepresentable {
         context.coordinator.installBridges()
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
-        if let url = Bundle.main.url(forResource: "J3DDashBoard", withExtension: "html") {
-            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+
+        // Intentar múltiples ubicaciones comunes al copiar la carpeta de assets como folder reference
+        if let (url, root) = findDashboardHTML() {
+            webView.loadFileURL(url, allowingReadAccessTo: root)
         } else {
             webView.loadHTMLString("<h2 style='font-family:Helvetica;color:#c00'>No se encontró J3DDashBoard.html en el bundle</h2>", baseURL: nil)
         }
@@ -39,6 +41,25 @@ struct WebContainer: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator {
         Coordinator(webView: webView)
+    }
+
+    private func findDashboardHTML() -> (URL, URL)? {
+        let candidates: [(name: String?, ext: String?, sub: String?)] = [
+            ("J3DDashBoard", "html", nil),
+            ("J3DDashBoard", "html", "assets"),
+            ("J3DDashBoard", "html", "app/src/main/assets"),
+            ("J3DDashBoard", "html", "main/assets"),
+            ("J3DDashBoard", "html", "app"),
+            ("J3DDashBoard", "html", "Dashboard"),
+            ("J3DDashBoard", "html", "das/Dashboard"),
+        ]
+        for c in candidates {
+            if let url = Bundle.main.url(forResource: c.name, withExtension: c.ext, subdirectory: c.sub) {
+                let root = url.deletingLastPathComponent()
+                return (url, root)
+            }
+        }
+        return nil
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
