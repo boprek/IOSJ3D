@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J3D Dashboard - Sin Conexión</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .offline-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        .offline-title {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+        .offline-message {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        .retry-button {
+            background: #ff8c00;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+        .retry-button:hover {
+            background: #ff7700;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+        .status-indicator {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .status-offline {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+        .status-connecting {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1 class="offline-title">Sin Conexión</h1>
+        <p class="offline-message">
+            No se puede conectar al servidor J3D.<br>
+            Verifica tu conexión de red y que el servidor esté ejecutándose.
+        </p>
+        <button class="retry-button" onclick="retryConnection()">
+            Reintentar Conexión
+        </button>
+        <div class="status-indicator status-offline" id="status">
+            Estado: Desconectado
+        </div>
+    </div>
+
+    <script>
+        let retryAttempts = 0;
+        const maxRetries = 5;
+
+        function retryConnection() {
+            if (retryAttempts >= maxRetries) {
+                document.getElementById('status').textContent = 
+                    'Máximo de intentos alcanzado. Recarga la página manualmente.';
+                return;
+            }
+
+            retryAttempts++;
+            const statusElement = document.getElementById('status');
+            const retryButton = document.querySelector('.retry-button');
+            
+            statusElement.className = 'status-indicator status-connecting';
+            statusElement.textContent = `Reintentando... (${retryAttempts}/${maxRetries})`;
+            retryButton.disabled = true;
+            retryButton.textContent = 'Conectando...';
+
+            // Intentar recargar después de un delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+
+        // Auto-retry cada 30 segundos
+        setInterval(() => {
+            if (navigator.onLine && retryAttempts < maxRetries) {
+                retryConnection();
+            }
+        }, 30000);
+
+        // Escuchar cambios en el estado de la red
+        window.addEventListener('online', () => {
+            document.getElementById('status').textContent = 'Conexión detectada, reintentando...';
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+
+        window.addEventListener('offline', () => {
+            document.getElementById('status').textContent = 'Estado: Sin conexión a internet';
+        });
+    </script>
+</body>
+</html>

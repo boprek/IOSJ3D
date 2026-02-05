@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="J3D Mobile">
+    
+    <title>J3D Mobile Dashboard</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="mobile_manifest.json">
+    <link rel="icon" type="image/x-icon" href="Dashboard.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+        
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .status {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .dashboard-screen {
+            display: none;
+            flex: 1;
+        }
+        
+        .login-form {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn-primary:hover, .btn-primary:active {
+            background: #e55a2b;
+            transform: scale(0.98);
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-action {
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        
+        .btn-action:hover, .btn-action:active {
+            background: rgba(255,255,255,0.2);
+            border-color: #ff6b35;
+            transform: scale(0.98);
+        }
+        
+        .btn-action .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .inspection-container {
+            display: none;
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            overflow: auto;
+        }
+        
+        .ui-content {
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            padding: 15px;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,107,53,0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .debug-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(0,0,0,0.9);
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 10px;
+            overflow-y: auto;
+            border-top: 2px solid #333;
+            display: block;
+        }
+        
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .debug-entry {
+            margin-bottom: 2px;
+            padding: 2px 0;
+        }
+        
+        @media screen and (max-width: 480px) {
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-action {
+                min-height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Botón de vuelta atrás -->
+        <button class="back-button" onclick="goBack()">←</button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>J3D Mobile Dashboard</h1>
+            <div class="status" id="connectionStatus">Conectando...</div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <!-- Pantalla de login -->
+            <div class="login-screen" id="loginScreen">
+                <div class="login-form">
+                    <h2>Iniciar Sesión</h2>
+                    <div class="form-group">
+                        <label for="username">Usuario:</label>
+                        <input type="text" id="username" placeholder="Ingrese usuario">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña:</label>
+                        <input type="password" id="password" placeholder="Ingrese contraseña">
+                    </div>
+                    <button class="btn-primary" onclick="login()">Iniciar Sesión</button>
+                </div>
+            </div>
+            
+            <!-- Pantalla principal del dashboard -->
+            <div class="dashboard-screen" id="dashboardScreen">
+                <div class="action-buttons">
+                    <button class="btn-action" onclick="openInspection()">
+                        <div class="icon">🔍</div>
+                        <div>Inspección</div>
+                    </button>
+                    <button class="btn-action" onclick="openAdmin()">
+                        <div class="icon">⚙️</div>
+                        <div>Administración</div>
+                    </button>
+                    <button class="btn-action" onclick="openReports()">
+                        <div class="icon">📊</div>
+                        <div>Reportes</div>
+                    </button>
+                    <button class="btn-action" onclick="logout()">
+                        <div class="icon">🚪</div>
+                        <div>Salir</div>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenedor de inspección -->
+            <div class="inspection-container" id="inspectionContainer">
+                <div class="ui-content" id="uiContent">
+                    <h3>Cargando inspección...</h3>
+                    <p>Conectando con el servidor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Consola de debug -->
+    <div class="debug-console" id="debugConsole">
+        <div class="debug-header">
+            <span>📱 Debug TC22</span>
+            <div>
+                <button onclick="clearDebug()" style="background:#666; color:white; border:none; padding:2px 8px; font-size:10px;">Clear</button>
+            </div>
+        </div>
+        <div id="debugOutput"></div>
+    </div>
+
+    <script>
+        // Variables globales
+        let socket = null;
+        let isConnected = false;
+        let currentView = 'login';
+        let uiValue = 1;
+        
+        // Función de debug
+        function debugLog(message) {
+            console.log(message);
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'debug-entry';
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            output.appendChild(entry);
+            
+            // Mantener solo últimos 50 mensajes
+            if (output.children.length > 50) {
+                output.removeChild(output.firstChild);
+            }
+            
+            // Scroll automático
+            document.getElementById('debugConsole').scrollTop = document.getElementById('debugConsole').scrollHeight;
+        }
+        
+        function clearDebug() {
+            document.getElementById('debugOutput').innerHTML = '';
+        }
+        
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('🚀 Mobile Dashboard iniciado');
+            
+            // Debug info PWA
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                debugLog('📱 App ejecutándose como PWA');
+            } else {
+                debugLog('🌐 App ejecutándose en navegador');
+            }
+            
+            connectToServer();
+        });
+        
+        // Conexión al servidor C++
+        function connectToServer() {
+            debugLog('🔌 Intentando conectar al servidor...');
+            
+            try {
+                socket = new WebSocket('ws://172.25.16.63:8192');
+                
+                socket.onopen = function(event) {
+                    isConnected = true;
+                    debugLog('✅ Conectado al servidor C++');
+                    document.getElementById('connectionStatus').textContent = 'Conectado';
+                };
+                
+                socket.onmessage = function(event) {
+                    debugLog('📨 Mensaje recibido: ' + event.data);
+                    handleServerMessage(event.data);
+                };
+                
+                socket.onclose = function(event) {
+                    isConnected = false;
+                    debugLog('❌ Conexión cerrada');
+                    document.getElementById('connectionStatus').textContent = 'Desconectado';
+                    
+                    // Intentar reconectar en 3 segundos
+                    setTimeout(connectToServer, 3000);
+                };
+                
+                socket.onerror = function(error) {
+                    debugLog('🚨 Error de conexión: ' + error);
+                    document.getElementById('connectionStatus').textContent = 'Error de conexión';
+                };
+                
+            } catch (error) {
+                debugLog('🚨 Error al crear WebSocket: ' + error);
+            }
+        }
+        
+        // Función para decodificar la respuesta (igual que el original)
+        function DecodeResponse(encoded) {
+            try {
+                return atob(encoded);
+            } catch (error) {
+                debugLog('⚠️ Error decodificando respuesta: ' + error);
+                return encoded;
+            }
+        }
+        
+        // Manejar mensajes del servidor
+        function handleServerMessage(rawData) {
+            debugLog('📨 Mensaje del servidor: ' + rawData);
+            
+            try {
+                const response = JSON.parse(rawData);
+                debugLog('📋 Response parseado: ' + JSON.stringify(response));
+                
+                const data = JSON.parse(DecodeResponse(response["data"]));
+                debugLog('📋 Data decodificado: ' + JSON.stringify(data));
+                
+                if (data["info"] === "UserAction" && data["action"] === "4") {
+                    if (data["result"] === "OK") {
+                        debugLog('✅ Login exitoso');
+                        showDashboard();
+                    } else if (data["result"] === "NOK") {
+                        debugLog('❌ Login fallido');
+                        alert('Usuario o contraseña incorrectos');
+                    }
+                } else if (data["info"] === "GetUIHtml") {
+                    handleUIData(data);
+                } else {
+                    debugLog('ℹ️ Mensaje no procesado: ' + data.info);
+                }
+                
+            } catch (error) {
+                debugLog('⚠️ Error procesando mensaje: ' + error);
+                debugLog('⚠️ Datos raw: ' + rawData);
+            }
+        }
+        
+        // Enviar mensaje al servidor
+        function sendMessage(message) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
+                debugLog('📤 Enviado: ' + JSON.stringify(message));
+            } else {
+                debugLog('❌ No se puede enviar, no hay conexión');
+            }
+        }
+        
+        // Funciones de interfaz
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                debugLog('⚠️ Usuario y contraseña son requeridos');
+                return;
+            }
+            
+            debugLog('🔐 Intentando login: ' + username);
+            
+            // Formato exacto que usa el dashboard original
+            sendMessage({
+                info: "UserAction",
+                action: "4",
+                username: username,
+                password: password,
+                uiValue: uiValue
+            });
+        }
+        
+
+        
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            currentView = 'dashboard';
+        }
+        
+        async function openInspection() {
+            debugLog('🔍 Abriendo modo inspección');
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('inspectionContainer').style.display = 'block';
+            document.querySelector('.back-button').style.display = 'block';
+            currentView = 'inspection';
+            
+            // Cargar UI usando el mismo método que el dashboard original
+            await loadUIContent();
+        }
+        
+        async function loadUIContent() {
+            try {
+                debugLog(`📡 Cargando UI ${uiValue} desde servidor...`);
+                
+                // Primero hacer la petición de fuerza (igual que el original)
+                const forceResponse = await fetch(`http://172.25.16.63:8192/1`);
+                debugLog(`🔧 Petición de fuerza: ${forceResponse.status}`);
+                
+                // Luego cargar el contenido de la UI
+                const uiResponse = await fetch(`http://172.25.16.63:8192/C:/J3D/UI/ui_${uiValue}.0.html`);
+                
+                if (!uiResponse.ok) {
+                    throw new Error(`Error del servidor: ${uiResponse.status}`);
+                }
+                
+                let htmlContent = await uiResponse.text();
+                debugLog(`✅ UI cargada: ${htmlContent.length} caracteres`);
+                
+                // Optimizar para móvil
+                if (!htmlContent.includes('viewport')) {
+                    htmlContent = htmlContent.replace(
+                        '<head>',
+                        '<head><meta name="viewport" content="width=device-width, initial-scale=0.6, maximum-scale=2.0, user-scalable=yes">'
+                    );
+                }
+                
+                // Añadir estilos móviles
+                const mobileStyles = `
+                    <style>
+                        body { margin: 0 !important; padding: 10px !important; overflow-x: auto !important; font-size: 14px !important; }
+                        svg { width: 100% !important; height: auto !important; max-width: none !important; }
+                        .inspeccion { font-size: 14px !important; margin-bottom: 10px !important; }
+                        .info1 { padding: 8px !important; background: #f0f0f0 !important; margin: 5px 0 !important; border-radius: 5px !important; }
+                        #cuerpo { width: 100% !important; overflow-x: auto !important; }
+                        #inspecciones_doble { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; }
+                        table { font-size: 12px !important; }
+                        td, th { padding: 5px !important; }
+                    </style>
+                `;
+                htmlContent = htmlContent.replace('</head>', mobileStyles + '</head>');
+                
+                // Cargar el contenido
+                document.getElementById('uiContent').innerHTML = htmlContent;
+                debugLog('✅ UI cargada y optimizada para móvil');
+                
+                // Continuar cargando (como el original)
+                setTimeout(loadUIContent, 1000);
+                
+            } catch (error) {
+                debugLog(`❌ Error cargando UI: ${error.message}`);
+                document.getElementById('uiContent').innerHTML = `
+                    <h3>Error cargando inspección</h3>
+                    <p>Error: ${error.message}</p>
+                    <button onclick="loadUIContent()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">Reintentar</button>
+                `;
+            }
+        }
+        
+        function openAdmin() {
+            debugLog('⚙️ Función de administración no implementada aún');
+        }
+        
+        function openReports() {
+            debugLog('📊 Función de reportes no implementada aún');
+        }
+        
+        function handleUIData(data) {
+            if (data.htmlContent) {
+                document.getElementById('uiContent').innerHTML = data.htmlContent;
+                debugLog('✅ UI cargada desde WebSocket');
+            }
+        }
+        
+        function goBack() {
+            if (currentView === 'inspection') {
+                document.getElementById('inspectionContainer').style.display = 'none';
+                document.getElementById('dashboardScreen').style.display = 'block';
+                document.querySelector('.back-button').style.display = 'none';
+                currentView = 'dashboard';
+                debugLog('⬅️ Volviendo al dashboard');
+            }
+        }
+        
+        function logout() {
+            debugLog('🚪 Cerrando sesión');
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            currentView = 'login';
+        }
+        
+        // Prevenir zoom en iOS
+        document.addEventListener('gesturestart', function (e) {
+            e.preventDefault();
+        });
+        
+        // Mejorar experiencia táctil
+        document.addEventListener('touchstart', function() {}, true);
+        
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./mobile_sw.js')
+                    .then(function(registration) {
+                        debugLog('✅ Service Worker registrado');
+                    })
+                    .catch(function(error) {
+                        debugLog('❌ Error registrando Service Worker: ' + error);
+                    });
+            });
+        }
+        
+        // Detectar si la app se puede instalar
+        let deferredPrompt;
+        
+        // Crear botón de instalación siempre visible para debug
+        const installButton = document.createElement('button');
+        installButton.textContent = '📱 Instalar App';
+        installButton.style.cssText = 'position:fixed; top:70px; right:20px; background:#ff6b35; color:white; border:none; padding:8px 15px; border-radius:20px; font-size:12px; z-index:9999;';
+        installButton.onclick = () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        debugLog('✅ Usuario instaló la app');
+                    } else {
+                        debugLog('❌ Usuario canceló instalación');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                debugLog('ℹ️ App no lista para instalación o ya instalada');
+                // Alternativa: añadir a pantalla de inicio manualmente
+                alert('Para instalar: \n1. Menú del navegador (⋮)\n2. "Añadir a pantalla de inicio"\n3. "Instalar"');
+            }
+        };
+        document.body.appendChild(installButton);
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            debugLog('💾 App se puede instalar');
+            deferredPrompt = e;
+            e.preventDefault(); // Prevenir el prompt automático
+        });
+    </script>
+</body>
+</html>

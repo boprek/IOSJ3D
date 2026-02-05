@@ -1,0 +1,7 @@
+let botonBarcode = document.getElementById("barcodegun");
+		botonBarcode.style.display = "none";
+
+
+
+
+meter esta lógica en AdminUI.js (en función Inicilizar())

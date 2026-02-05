@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Test UI Fetch</title>
+<script src="util.js"></script>
+<style>
+body { font-family: Arial; padding: 20px; }
+iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 20px; }
+label { font-size: 16px; margin-right: 10px; }
+input { font-size: 16px; width: 60px; }
+#status {
+    margin-top: 10px;
+    font-size: 18px;
+}
+#disconnected {
+    display: none;
+    background-color: #ff4f4f;
+    color: white;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    width: 300px;
+}
+</style>
+</head>
+<body>
+
+<h2>Probando WEBSOCKET</h2>
+
+<div id="status"></div>
+<div id="disconnected">Desconectado del servidor</div>
+
+<script type="module">
+    // IMPORTA TU MÓDULO (ajusta la ruta si hace falta)
+    import WS from "./j3dWebSocket.js";
+
+    // Stubs mínimos por si no existen en este entorno de test
+    if (typeof window.DecodeResponse !== "function") {
+        // Suponemos que response.data ya viene como JSON string
+        window.DecodeResponse = (raw) => raw;
+    }
+
+    if (typeof window.PrintMessage !== "function") {
+        window.PrintMessage = (msg, color, ms) => {
+            const status = document.getElementById("status");
+            if (!status) {
+                console.log("[PrintMessage]", msg);
+                return;
+            }
+            status.textContent = msg;
+            status.style.color = color || "#000";
+            if (ms) {
+                setTimeout(() => {
+                    status.textContent = "";
+                }, ms);
+            }
+        };
+    }
+
+    const statusEl = document.getElementById("status");
+    const disconnectedEl = document.getElementById("disconnected");
+
+    // Tipo que vamos a usar para la petición
+    const TYPE_NAME = "Name";
+
+    // Registramos el tipo en tu sistema de tipos
+    WS.defineType(TYPE_NAME);
+
+    // Payload fijo que quieres enviar en bucle
+    const REQUEST_PAYLOAD = {
+        info: "Name",
+        Name: "Admin"
+    };
+
+    // Función que intenta enviar la petición.
+    // Si aún no hay conexión, reintenta hasta lograrlo.
+    function startRequestLoop() {
+        function trySend() {
+            const result = WS.send(REQUEST_PAYLOAD);
+
+            if (result !== 0) {
+                console.warn("[TEST] No se pudo enviar (socket no conectado). Reintentando…");
+                setTimeout(trySend, 1000);
+                return;
+            }
+
+            console.log("[TEST] Enviado:", REQUEST_PAYLOAD);
+            if (statusEl) {
+                statusEl.textContent = "Petición enviada, esperando respuesta…";
+                statusEl.style.color = "#333";
+            }
+        }
+
+        trySend();
+    }
+
+    // Handler para las respuestas del tipo "Name"
+    WS.on(TYPE_NAME, (data) => {
+        console.log("[TEST] Respuesta recibida para 'Name':", data);
+
+        if (statusEl) {
+            statusEl.textContent = "Respuesta recibida, enviando de nuevo en 1s…";
+            statusEl.style.color = "green";
+        }
+
+        // Tras recibir la respuesta, volvemos a enviar al cabo de 1 segundo
+        setTimeout(startRequestLoop, 1000);
+    });
+
+    // Nos enganchamos a los eventos nativos del socket para mostrar estado visual
+    // Aprovechamos que tu módulo expone connect() pero no el objeto socket,
+    // por lo que usamos PrintMessage y el propio sistema de reconexión.
+    const SERVER_ADDR = "172.25.16.63:8192"; // <-- CAMBIA ESTO A host:puerto de tu servidor
+
+    // Mostrar estado inicial
+    if (statusEl) {
+        statusEl.textContent = "Conectando al servidor WebSocket…";
+        statusEl.style.color = "#333";
+    }
+
+    // Llamamos a connect() de tu módulo
+    WS.connect(SERVER_ADDR);
+
+    // Como tu módulo controla onopen internamente, iniciamos el bucle con un pequeño delay.
+    // El propio WS.send reintentará si todavía no se ha abierto la conexión.
+    setTimeout(startRequestLoop, 1500);
+</script>
+
+</body>
+</html>

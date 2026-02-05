@@ -1,0 +1,410 @@
+/* Revert viewport/global overrides to restore wallpaper */
+/* GENERAL */
+@font-face{
+	font-family: 'Montse_regular';
+	font-style: normal;
+	font-weight: 400;
+	src: url('Montserrat-Medium.ttf');
+}
+
+*{
+   font-family: 'Montse_regular';
+   padding: 0;
+   margin: 0;
+   cursor: pointer;
+   src: url('Montserrat-Medium.ttf');
+}
+
+/* Prevent blue tap highlight / selection flash on Android WebView */
+/* Keep selection enabled for inputs, textareas, and contenteditable */
+html, body, body *:not(input):not(textarea):not([contenteditable="true"]) {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Remove tap highlight ripple/flash */
+*, *::before, *::after {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove focus outline on non-input elements */
+*:not(input):not(textarea):not(select):focus {
+    outline: none !important;
+}
+
+/* Force each UI iframe to truly occupy the viewport */
+#ui1,
+#ui2,
+#ui3,
+#ui4,
+#ui5,
+#ui6,
+#ui7,
+#ui8,
+#ui9,
+#ui10,
+#ui11,
+#ui13,
+#ui14,
+#ui15 
+#ui12 {
+    position: absolute;
+    inset: 0;
+    width: 258vw;
+    height: 258vh;
+    transform: none;
+}
+
+/* When iframes are larger than the viewport (200%), allow panning */
+/* Fullscreen overlay for UI display */
+#UIDisplay {
+    position: fixed;
+    inset: 0; /* top/right/bottom/left 0 */
+    top:265px;
+    left:530px;
+    width: 258vw;
+    height: 258vh;
+    z-index: 9999;
+    overflow: hidden; /* no scrollbars */
+    background: #000; /* cover wallpaper completely */
+}
+/* Nota: si quieres aumentar el tamaño del host,
+     hazlo en la regla existente de `#UIDisplay` arriba
+     ajustando `width` y `height` (por ejemplo 258vw/258vh).
+*/
+
+/* Make the UI iframe wider to avoid cutting; pan horizontally */
+#UIDisplay iframe {
+    position: absolute;
+    inset: 0;
+    width: 258vw;
+    height: 258vh;
+    transform: none;
+    background: transparent;
+    border: 0;
+    display: block;
+}
+
+/* Enforced class for UI iframes to override inline styles */
+.ui-frame {
+    position: absolute;
+    inset: 0;
+    width: 220vw;
+    height: 220vh;
+    transform: none;
+    background: transparent;
+    border: 0;
+    display: block;
+}
+
+/* Close button shown above iframe UI */
+#UIDisplayClose:hover {
+    background: rgba(0,0,0,0.75);
+}
+
+
+/* SCREEN EDITOR */
+#uiheader{
+    background-color: #f0b898;
+    z-index: 3;
+    border: solid #b66b45;
+    box-sizing: border-box;
+    border-width: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+#screen{
+	position: absolute;
+    top: 205px;
+    left: 480px;
+    height: 540px;
+    width: 960px;
+    background-color: rgb(0, 0, 0);
+    box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
+    z-index: 1;
+}
+
+#SUcartelLinea{
+    position: absolute;
+    top: 30px;
+    left: 800px;
+    width: 160px;
+    height: 30px;
+    text-align: center;
+    background: #f0b898;
+    font-size: 25px;
+    border: 3px solid #b66b45;
+}
+
+#SUFondoTitulo{
+    height: 100px;
+    width: 1760px;
+    position: absolute;
+    top: 90px; 
+    left: 85px;
+    background-color: #e0e0e0f3;
+    border-radius: 15px;
+}
+
+#SUpantallas{
+    overflow-y: auto;
+    height: 820px;
+    width: 1760px;
+    position: absolute;
+    top: 220px; 
+    left: 85px;
+    background-color: #f0b898;
+    border-radius: 15px;
+}
+
+#SUpantallas::after {
+    content: "<div id="hola"></div>";
+    display: block;
+    height: 10px; /* Margen adicional hacia abajo no se que ees esto, a�ade como un div al final */
+    position: absolute;
+    bottom: -10px; /* Valor negativo para ocultar el pseudo-elemento */
+    left: 0;
+    right: 0;
+}
+
+.SUscreenTexto{
+    position:absolute;
+    background-color: rgb(255, 255, 255);
+    height: 20px;
+    width: 150px;
+    border: 3px solid #b66b45;
+    text-align: center;
+}
+
+.SUscreen{
+    position:absolute;
+    background-color: black;
+    height: 291.6px;
+    width: 518.4px;
+    border: 3px solid #b66b45;
+    cursor: auto !important;
+}
+
+
+#uidouble{
+    position:absolute;
+    top: 205px;
+    left: 960px;
+    width:480px;
+    height:540px;
+    background-color: rgba(255, 0, 0, 0.466);
+    display:none;
+    z-index: 2;
+}
+
+#bcopy{
+	position: absolute;
+    top: 620px;
+    left: 42px;
+    width: 75px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#bpaste{
+	position: absolute;
+    top: 620px;
+    left: 127px;
+    width: 75px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#brline{
+	position: absolute;
+    top: 680px;
+    left: 42px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#bmodels{
+	position: absolute;
+    top: 740px;
+    left: 42px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#bactualize{
+	position: absolute;
+    top: 680px;
+    left: 1700px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#bactivate{
+	position: absolute;
+    top: 740px;
+    left: 1700px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#SUbactivate{
+	position: absolute;
+    top: 22px;
+    left: 1392px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#screenheader{
+	position: absolute;
+    top: 86px;
+    left: 875px;
+    height: 85px;
+    width: 165px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+}
+
+#selections{
+	position: absolute;
+    top: 475px;
+    left: 12px;
+    height: 150px;
+    width: 220px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+    z-index: 3;
+}
+
+#CshowError{
+	visibility: hidden;
+    position: absolute;
+    background-color: #e0e0e0f3;
+    color: white;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    border-radius: 25px;
+    border: 3px solid white;
+    top: 27px;
+    left: 799px;
+    width: 450px;
+    height: 100px;
+    z-index: 80;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: rgb(0 0 0) 0px 0px 20px, rgb(255 255 255) 0px 0px 6px;
+}
+
+#divCreateNew{
+	position: absolute;
+    top: 88px;
+    left: 1600px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+    width: 290px;
+    height: 360px;
+    z-index: 3;
+}
+
+#zonevalues{
+	position: absolute;
+    top: 205px;
+    left: 31px;
+    height: 210px;
+    width: 185px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+    z-index: 3;
+}
+
+
+/* SYMBOL EDITOR */
+#symbolscreen{
+    position: absolute;
+    top: 205px;
+    left: 480px;
+    height: 540px;
+    width: 960px;
+    background-color: rgb(0, 0, 0);
+    box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
+    z-index: 1;
+}
+
+#sinfo{
+    position: absolute;
+    top: 258px;
+    left: 117px;
+    height: 116px;
+    width: 235px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+}
+
+#symbolvalues{
+	position: absolute;
+    top: 420px;
+    left: 55px;
+    height: 270px;
+    width: 365px;
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 2px 2px 2px;
+    background-color: #ee763177;
+    border-radius: 8px 8px 8px 8px;
+}
+
+#bactsymbols{
+    position: absolute;
+    top: 460px;
+    left: 1596px;
+    width: 160px;
+    height: 50px;
+    border-radius: 18px 18px 18px 18px;
+    background: #f0b898;
+    border-color: #b66b45;
+}
+
+#SUNextButton{		
+	content: url(../images/NextButton.png);
+}
+#SUNextButton:hover{
+	content: url(../images/NextButtonH.png);
+}
+
+#SUPreviousButton{		
+	content: url(../images/PreviousButton.png);
+}
+#SUPreviousButton:hover{
+	content: url(../images/PreviousButtonH.png);
+}

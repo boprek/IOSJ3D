@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>J3D Mobile Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* PANTALLA DE LOGIN */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 1000;
+        }
+        
+        .login-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .input-group input::placeholder {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 3px rgba(255,140,0,0.3);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ff8c00, #ff6b35);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,140,0,0.4);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* PANTALLA PRINCIPAL */
+        .main-screen {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+        
+        /* HEADER */
+        .mobile-header {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #ff8c00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* CONTENIDO PRINCIPAL */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* GRID DE APLICACIONES */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .app-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .app-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .app-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* ESTADO DEL SISTEMA */
+        .system-status {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .status-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 15px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        .status-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .status-ok { color: #4CAF50; }
+        .status-warning { color: #FF9800; }
+        .status-error { color: #f44336; }
+        
+        /* NAVEGACIÓN INFERIOR */
+        .bottom-nav {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(255,140,0,0.3);
+            color: #ff8c00;
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* DEBUG CONSOLE */
+        .debug-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30vh;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .debug-console.show {
+            transform: translateY(0);
+        }
+        
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .debug-output {
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .debug-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #ff8c00;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(255,140,0,0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .debug-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* RESPONSIVIDAD AVANZADA */
+        @media (min-width: 768px) {
+            .apps-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            }
+            
+            .app-card {
+                min-height: 140px;
+            }
+            
+            .app-icon {
+                font-size: 42px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .apps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .login-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+        }
+        
+        /* ANIMACIONES */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* UTILIDADES */
+        .hidden { display: none !important; }
+        .loading { opacity: 0.5; pointer-events: none; }
+        
+        /* CONEXIÓN */
+        .connection-status {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-status.connected {
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+        }
+        
+        .connection-status.disconnected {
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 152, 0, 0.9);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container fade-in">
+            <h1 class="login-title">🏭 J3D Dashboard</h1>
+            <form id="mobileLoginForm">
+                <div class="input-group">
+                    <input type="text" id="mobileUsername" placeholder="👤 Usuario" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="mobilePassword" placeholder="🔑 Contraseña" required>
+                </div>
+                <button type="submit" class="login-btn">Acceder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL -->
+    <div id="mainScreen" class="main-screen">
+        <!-- HEADER -->
+        <header class="mobile-header">
+            <h1 class="header-title">J3D Dashboard</h1>
+            <div class="user-info" onclick="showUserMenu()">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="userName">Usuario</span>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            <!-- ESTADO DEL SISTEMA -->
+            <section class="system-status fade-in">
+                <h2 class="status-title">📊 Estado del Sistema</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value status-ok" id="plcStatus">●</div>
+                        <div class="status-label">PLC</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value status-ok" id="ledStatus">●</div>
+                        <div class="status-label">LED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value status-ok" id="sysStatus">●</div>
+                        <div class="status-label">SYS</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="connectionStatus">🔗</div>
+                        <div class="status-label">Conexión</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- APLICACIONES -->
+            <section class="apps-grid fade-in">
+                <div class="app-card" onclick="openApp('adminui')">
+                    <div class="app-icon">⚙️</div>
+                    <div class="app-name">Admin UI</div>
+                </div>
+                <div class="app-card" onclick="openApp('reports')">
+                    <div class="app-icon">📊</div>
+                    <div class="app-name">Reportes</div>
+                </div>
+                <div class="app-card" onclick="openApp('inspection')">
+                    <div class="app-icon">🔍</div>
+                    <div class="app-name">Inspección</div>
+                </div>
+                <div class="app-card" onclick="openApp('uieditor')">
+                    <div class="app-icon">🎨</div>
+                    <div class="app-name">UI Editor</div>
+                </div>
+                <div class="app-card" onclick="openApp('uidisplay')">
+                    <div class="app-icon">📺</div>
+                    <div class="app-name">UI Display</div>
+                </div>
+                <div class="app-card" onclick="openApp('users')">
+                    <div class="app-icon">👥</div>
+                    <div class="app-name">Usuarios</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- NAVEGACIÓN INFERIOR -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="showHome()">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Inicio</div>
+            </div>
+            <div class="nav-item" onclick="showApps()">
+                <div class="nav-icon">📱</div>
+                <div class="nav-label">Apps</div>
+            </div>
+            <div class="nav-item" onclick="showStatus()">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Estado</div>
+            </div>
+            <div class="nav-item" onclick="showSettings()">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Config</div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- STATUS DE CONEXIÓN -->
+    <div id="connectionIndicator" class="connection-status connecting">Conectando...</div>
+
+    <!-- DEBUG CONSOLE -->
+    <div id="debugConsole" class="debug-console">
+        <div class="debug-header">
+            <strong>🐛 Debug Console</strong>
+            <div>
+                <button onclick="clearDebug()" style="background:#666; color:white; border:none; padding:4px 8px; border-radius:4px; margin-right:5px;">Clear</button>
+                <button onclick="toggleDebug()" style="background:#f44336; color:white; border:none; padding:4px 8px; border-radius:4px;">×</button>
+            </div>
+        </div>
+        <div id="debugOutput" class="debug-output"></div>
+    </div>
+
+    <!-- BOTÓN DEBUG -->
+    <button class="debug-btn" onclick="toggleDebug()">🐛</button>
+
+    <script>
+        // Variables globales
+        let socketDash = null;
+        let isLoggedIn = false;
+        let currentUser = '';
+        let debugVisible = false;
+
+        // Funciones de debug
+        function debugLog(message, type = 'info') {
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let color = '#00ff00';
+            let icon = 'ℹ️';
+            
+            switch(type) {
+                case 'error': color = '#ff4444'; icon = '❌'; break;
+                case 'warn': color = '#ffaa00'; icon = '⚠️'; break;
+                case 'success': color = '#44ff44'; icon = '✅'; break;
+                case 'websocket': color = '#00aaff'; icon = '🔌'; break;
+            }
+            
+            const div = document.createElement('div');
+            div.style.color = color;
+            div.innerHTML = `[${timestamp}] ${icon} ${message}`;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function toggleDebug() {
+            debugVisible = !debugVisible;
+            document.getElementById('debugConsole').classList.toggle('show', debugVisible);
+        }
+
+        function clearDebug() {
+            document.getElementById('debugOutput').innerHTML = '';
+        }
+
+        // Conexión WebSocket
+        function connectWebSocket() {
+            const ip = localStorage.getItem('j3d_server_ip') || '172.25.16.63:8192';
+            debugLog(`Conectando a WebSocket: ws://${ip}`, 'websocket');
+            
+            try {
+                socketDash = new WebSocket(`ws://${ip}`);
+                
+                socketDash.onopen = function() {
+                    debugLog('WebSocket conectado exitosamente', 'success');
+                    updateConnectionStatus('connected');
+                };
+                
+                socketDash.onmessage = function(event) {
+                    debugLog(`Mensaje recibido: ${event.data}`, 'websocket');
+                    processMessage(event.data);
+                };
+                
+                socketDash.onclose = function(event) {
+                    debugLog(`WebSocket desconectado: ${event.code}`, 'error');
+                    updateConnectionStatus('disconnected');
+                    
+                    // Reconectar automáticamente
+                    setTimeout(connectWebSocket, 3000);
+                };
+                
+                socketDash.onerror = function(error) {
+                    debugLog(`Error WebSocket: ${error}`, 'error');
+                    updateConnectionStatus('disconnected');
+                };
+                
+            } catch (error) {
+                debugLog(`Error creando WebSocket: ${error.message}`, 'error');
+                updateConnectionStatus('disconnected');
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const indicator = document.getElementById('connectionIndicator');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            indicator.className = `connection-status ${status}`;
+            
+            switch(status) {
+                case 'connected':
+                    indicator.textContent = '🔗 Conectado';
+                    connectionStatus.textContent = '🟢';
+                    connectionStatus.className = 'status-value status-ok';
+                    break;
+                case 'connecting':
+                    indicator.textContent = '🔄 Conectando...';
+                    connectionStatus.textContent = '🟡';
+                    connectionStatus.className = 'status-value status-warning';
+                    break;
+                case 'disconnected':
+                    indicator.textContent = '❌ Desconectado';
+                    connectionStatus.textContent = '🔴';
+                    connectionStatus.className = 'status-value status-error';
+                    break;
+            }
+            
+            // Ocultar indicador después de 3 segundos si está conectado
+            if (status === 'connected') {
+                setTimeout(() => {
+                    indicator.style.opacity = '0';
+                    setTimeout(() => indicator.style.display = 'none', 300);
+                }, 3000);
+            } else {
+                indicator.style.display = 'block';
+                indicator.style.opacity = '1';
+            }
+        }
+
+        // Procesar mensajes del servidor
+        function processMessage(message) {
+            try {
+                const data = JSON.parse(message);
+                debugLog(`Datos procesados: ${JSON.stringify(data)}`, 'websocket');
+                
+                // Aquí va la lógica de procesamiento de mensajes
+                // Similar al ProcessMSGDas original
+                
+            } catch (error) {
+                debugLog(`Error procesando mensaje: ${error.message}`, 'error');
+            }
+        }
+
+        // Login móvil
+        document.getElementById('mobileLoginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('mobileUsername').value;
+            const password = document.getElementById('mobilePassword').value;
+            
+            debugLog(`Intentando login: ${username}`, 'info');
+            
+            if (!socketDash || socketDash.readyState !== WebSocket.OPEN) {
+                debugLog('WebSocket no conectado, intentando reconectar...', 'warn');
+                connectWebSocket();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            if (socketDash && socketDash.readyState === WebSocket.OPEN) {
+                const loginData = {
+                    id: Math.floor(Math.random() * 10000).toString(),
+                    info: "UserAction",
+                    action: "4",
+                    username: username,
+                    password: password,
+                    uiValue: 1
+                };
+                
+                debugLog(`Enviando login: ${JSON.stringify(loginData)}`, 'websocket');
+                socketDash.send(JSON.stringify(loginData));
+                
+                // Por ahora, simular login exitoso
+                setTimeout(() => {
+                    showMainScreen(username);
+                }, 1000);
+                
+            } else {
+                debugLog('No se pudo establecer conexión WebSocket', 'error');
+                alert('Error de conexión. Verifica que el servidor esté funcionando.');
+            }
+        });
+
+        function showMainScreen(username) {
+            currentUser = username;
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'flex';
+            
+            debugLog(`Login exitoso para: ${username}`, 'success');
+            isLoggedIn = true;
+        }
+
+        // Funciones de navegación
+        function openApp(appName) {
+            debugLog(`Abriendo aplicación: ${appName}`, 'info');
+            
+            // Aquí redirigir a las apps originales o abrir en iframe
+            switch(appName) {
+                case 'adminui':
+                    window.open('./Apps/AdminUI/AdminUI.html', '_blank');
+                    break;
+                case 'reports':
+                    window.open('./Apps/Reports/Reports.html', '_blank');
+                    break;
+                case 'inspection':
+                    debugLog('Modo inspección seleccionado', 'info');
+                    break;
+                case 'uieditor':
+                    window.open('./Apps/UIEditor/UIEditor.html', '_blank');
+                    break;
+                case 'uidisplay':
+                    window.open('./Apps/UIDisplay/UIDisplay.html', '_blank');
+                    break;
+                case 'users':
+                    debugLog('Gestión de usuarios', 'info');
+                    break;
+            }
+        }
+
+        function showHome() {
+            debugLog('Navegando a Inicio', 'info');
+            setActiveNav(0);
+        }
+
+        function showApps() {
+            debugLog('Navegando a Apps', 'info');
+            setActiveNav(1);
+        }
+
+        function showStatus() {
+            debugLog('Navegando a Estado', 'info');
+            setActiveNav(2);
+        }
+
+        function showSettings() {
+            debugLog('Navegando a Configuración', 'info');
+            setActiveNav(3);
+        }
+
+        function setActiveNav(index) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach((item, i) => {
+                item.classList.toggle('active', i === index);
+            });
+        }
+
+        function showUserMenu() {
+            debugLog('Mostrando menú de usuario', 'info');
+            // Implementar menú de usuario
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('🚀 J3D Mobile Dashboard iniciado', 'success');
+            debugLog(`User Agent: ${navigator.userAgent}`, 'info');
+            debugLog(`Pantalla: ${screen.width}x${screen.height}`, 'info');
+            
+            // Conectar WebSocket
+            connectWebSocket();
+            
+            // Configurar modo seguro para debug
+            window.safeMode = function() {
+                debugLog('🛡️ Modo seguro activado', 'warn');
+                document.body.style.background = '#1a1a1a';
+                document.body.innerHTML += '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:white;text-align:center;z-index:9999;"><h1>MODO SEGURO</h1><p>Dashboard en modo compatibilidad</p><button onclick="location.reload()">Recargar</button></div>';
+            };
+        });
+    </script>
+</body>
+</html>

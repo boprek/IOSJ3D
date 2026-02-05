@@ -20,15 +20,17 @@ struct WebContainer: UIViewRepresentable {
         wv.scrollView.bounces = false
         wv.backgroundColor = .black
         wv.isOpaque = false
-        // Permitir file:// acceso interno a recursos propios.
-        wv.setValue(true, forKey: "allowFileAccessFromFileURLs")
         return wv
     }()
 
     func makeUIView(context: Context) -> WKWebView {
         context.coordinator.installBridges()
+        webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator
         if let url = Bundle.main.url(forResource: "J3DDashBoard", withExtension: "html") {
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        } else {
+            webView.loadHTMLString("<h2 style='font-family:Helvetica;color:#c00'>No se encontró J3DDashBoard.html en el bundle</h2>", baseURL: nil)
         }
         return webView
     }
@@ -55,6 +57,8 @@ struct WebContainer: UIViewRepresentable {
             controller.add(self, name: "AndroidWebSocket")
             controller.add(self, name: "AndroidUser")
             controller.addUserScript(WKUserScript(source: Self.androidShim, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            controller.addUserScript(WKUserScript(source: Self.consoleShim, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            controller.add(self, name: "Log")
         }
 
         // JS -> Native
@@ -64,6 +68,8 @@ struct WebContainer: UIViewRepresentable {
                 handleWebSocket(message.body)
             case "AndroidUser":
                 handleUser(message.body)
+            case "Log":
+                handleLog(message.body)
             default:
                 break
             }
@@ -189,6 +195,24 @@ struct WebContainer: UIViewRepresentable {
             }
         }
 
+        // MARK: - WKNavigationDelegate
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            showLoadError(error)
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            showLoadError(error)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            evaluate("console.log('✅ WebView cargada');")
+        }
+
+        private func showLoadError(_ error: Error) {
+            let msg = Self.escape(error.localizedDescription)
+            evaluate("document.body.innerHTML='<div style=\"font-family:Helvetica;padding:16px;color:#c00\">Carga fallida: \(msg)</div>';")
+        }
+
         private static func escape(_ text: String) -> String {
             text
                 .replacingOccurrences(of: "\\", with: "\\\\")
@@ -223,5 +247,27 @@ struct WebContainer: UIViewRepresentable {
             })();
             """
         }()
+
+        // Hook de consola para ver logs en nativo
+        private static let consoleShim: String = {
+            return """
+            (function(){
+                const send = (level, msg) => {
+                    window.webkit?.messageHandlers?.Log?.postMessage({ level, msg: String(msg) });
+                };
+                const oldLog = console.log;
+                console.log = function(){ oldLog.apply(console, arguments); send('log', Array.from(arguments).join(' ')); };
+                const oldErr = console.error;
+                console.error = function(){ oldErr.apply(console, arguments); send('error', Array.from(arguments).join(' ')); };
+                window.addEventListener('error', function(e){ send('error', e.message || e.error || 'window.onerror'); });
+            })();
+            """
+        }()
+
+        // Recibe logs desde JS
+        func handleLog(_ body: Any) {
+            guard let dict = body as? [String: Any], let msg = dict["msg"] as? String else { return }
+            NSLog("[JS] %@", msg)
+        }
     }
 }

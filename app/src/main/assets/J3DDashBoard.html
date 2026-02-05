@@ -1,0 +1,238 @@
+<html>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<style id="styleDash">
+			@page{
+				size: landscape;
+				size: portrait;
+			}
+	</style>
+	<text id="dashversion" style="display:none"></text>
+	<link rel="stylesheet" type="text/css" href="Apps/UIDisplay/css/UIDisplay_estilo.css">
+	<link rel="stylesheet" type="text/css" href="css/Dashboard_estilo.css">
+	<link rel="stylesheet" type="text/css" href="css/Buscador.css">
+
+	<script src='js/utils/compress.js'></script>
+	<script src='js/utils/util.js'></script>
+	<script type="module" src='js/Dashboard.js'></script>
+	
+	
+	<body style="overflow-x: hidden;">
+		<div id="buscador" style="z-index:3;position:fixed;top:0px;left:0px; display:none; font-size:14px">
+
+			<div id="OpcionesBuscador" style="position:absolute;top:70px; left:10px;height:500px">
+
+				<!-- Champ RELAI -->
+				<div style="margin-bottom: 8px;">
+					<label for="p_relai" style="color:black;">RELAI :</label><br>
+					<input id="p_relai" class="use-keyboard-input" type="text" style="width:200px;">
+				</div>
+
+				<!-- Champ PJI -->
+				<div style="margin-bottom: 8px;">
+					<label for="p_val1" style="color:black;">PJI :</label><br>
+					<input id="p_val1" class="use-keyboard-input" type="text" style="width:200px;">
+				</div>
+
+				<!-- Botones -->
+				<div id="buscador_buttons" style="top: 10px;">
+					<!-- Buscar: pide resultados + valida UI -->
+					<img id="boton_buscador"
+						type="button"
+						style="position:absolute; left:510px;top:400px;width:150px"
+						onclick="Buscador.PideResultados();">
+					<img id="boton_salirB"
+						style="z-index:5;position:absolute; left:0px;top:400px;width:150px"
+						onclick="Buscador.Exit()">
+				</div>
+			</div>
+		</div>
+
+		<div id="resultados" style="z-index:10;position:absolute;top:29vh;left:150px;height:610px;display:none;">
+			<div id="Busquedas" style="position:absolute; top:52px; left:5px;"></div>
+			<div id="NumRes" class="Numres" style="position:absolute;top:10px;left:600px;"></div>
+			<div id="botones" style="position:absolute;top:480px;">
+				<input class="Boton_resultados" id ="pagina_inicial" type="button" style = "position:absolute;left:7px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(1)" style = "position:absolute;left:130px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(2)" style = "position:absolute;left:257px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(3)" style = "position:absolute;left:384px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(4)" style = "position:absolute;left:511px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(5)" style = "position:absolute;left:638px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(6)" style = "position:absolute;left:765px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(7)" style = "position:absolute;left:892px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(8)" style = "position:absolute;left:1019px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(9)" style = "position:absolute;left:1146px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(10)" style = "position:absolute;left:1273px;">
+				<input class="Boton_resultados" type="button" onclick = "Buscador.adelanta(11)" style = "position:absolute;left:1400px;">
+				<input class="Boton_resultados" id ="pagina_final" type="button" style = "position:absolute;left:1525px;">
+			</div>
+			<img id="boton_cerrar" type="button" style="z-index:2; position:relative; top:4px; left:1581px"
+				onclick="Buscador.CerrarResultados();"></img>
+			<img id="info_icon" class="info_icon" style="z-index:2; position:relative; top:-8px; left:508px"></img>
+		</div>
+
+		<!-- Capa oscura y contenedor de Zoom (para abreZoom) -->
+		<div id="borroso" style="display:none;position:fixed;inset:0;z-index:25;background:rgba(0,0,0,0.35);"></div>
+		<div id="Zoom_Inspecciones" style="z-index:26;position:absolute;top:12.5vh;left:192px;visibility:hidden;background:white;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,0.25);"></div>
+
+
+		<div id="DashBar">
+		  <img class="fixed" id="fixed" src="images/MainBar.png" style="top: 0; left:0; z-index: 15;"></img>	
+			  <img
+					id="MuestraBuscador"
+					class="fixed"
+					style="top:6px; left:7px; z-index:20;display:none;"
+					onclick="Buscador.MuestraBuscador()"
+				/>
+			<div id="AppOptions" style="position:fixed;top: 3px;left:285px;z-index:20">
+				<img id="pUsers" src="images/Users.png" onmouseover="this.src='images/UsersH.png';" onmouseout="this.src='images/Users.png';" style="position:absolute;left: 0px;z-index:14;display:none"></img>
+				<img id="pUIDisplay" src="images/UIDisplay.png" onmouseover="this.src='images/UiDisplayH.png';" onmouseout="this.src='images/UIDisplay.png';" style="position:absolute;margin-left: 224px;z-index:14; display:none"></img>
+			</div>
+			<div id="EAStatus" style="position:absolute;z-index:17;top:12px;">
+				<img class="fixed" id="StatusPLC" style="left:1775px"/>
+				<img class="fixed" id="StatusLED" style="left:1675px"/>
+				<img class="fixed" id="StatusSYS" style="left:1575px"/>
+				<img class="fixed" id="boton_ChangeDefects" style="left:1475px"/>
+			</div>
+			<img class="fixed" id="boton_salir" style="top:6px; left:1869px;z-index:17" onclick="window.exit()"></img>
+            
+			<div id="userDropdown" style="left:800px; width:300px">
+				<p><span language="USER_LABEL">Utilisateur</span> : <span id="dropdownUsername"></span></p>
+				<p><span language="ROLE_LABEL">Rôle</span> : <span id="userRole"></span></p>
+				<button onclick="logout()" language="LOGOUT_BUTTON">Se déconnecter</button>
+			</div>
+			<div id="cartel_save" style="visibility:hidden"></div>
+			<div id="loginForm" style="display:none; position:absolute; top:150px; left:90%; transform:translateX(-50%); z-index:25;">
+				<h2 language="LOGIN_TITLE">Connexion</h2>
+				<form onsubmit="return handleLogin(event);">
+					<label for="username" language="USER_LABEL">Nom d'utilisateur :</label>
+					<input type="text" id="username" name="username" required>
+					<label for="password" language="PASSWORD_LABEL">Mot de passe :</label>
+					<div style="position: relative;">
+						<input type="password" id="password" name="password" required>
+						<img id="togglePassword" src="images/Ojo.png" alt="Mostrar/Ocultar Contraseña" style="position: absolute; right: 10px; top: 20px; width:10%; opacity:0.8;transform: translateY(-50%); cursor: pointer; display: none;">
+					</div>
+					<button type="submit" language="LOGIN_BUTTON">Se connecter</button>
+				</form>
+			</div>		
+		<img id="addUser" src="images/PlusButton.png" style = "position: absolute; top:74px; left:93px; display: none;" onmouseover="this.src='images/PlusButtonH.png'" onclick="hideTable()" onmouseout="this.src='images/PlusButton.png'">
+		<img id="refreshTable" src="images/Refresh.png" style = "position:absolute;top:73px; left:165px; display:none; width:36px; height: 36px;" onmouseover="this.src='images/RefreshH.png'" onmouseout="this.src='images/Refresh.png'" onclick="refreshTable()">
+		<!--<img id="search" src="C:/J3D/Dashboard/images/Search.png" style = "position:absolute; top:73px; left:236px; display:none; width:36px;height:36px;" onmouseover="this.src='images/SearchH.png'" onmouseout="this.src='images/Search.png'" onclick="searchUser();">
+	-->
+		<img id="imagen_cargando" style= "z-index:5;position:absolute;top:41.5vh; left:857px; visibility: hidden"> 
+		<div id="addUserForm" style="display:none">
+			<h2 language="CREATE_TITLE">Créer un utilisateur</h2>
+			<form id="userForm" onsubmit="return addUser(event)">
+				<label for="usernameAdd" language="USER_LABEL">Nom d'utilisateur :</label>
+				<input type="text" id="usernameAdd" name="usernameAdd" required>
+				<label for="passwordAdd" language="PASSWORD_LABEL">Mot de passe :</label>
+				<input type="text" id="passwordAdd" name="passwordAdd" required>
+				<label for="rolAdd" language="ROLE_LABEL">Rôle :</label>
+				<select id="rolAdd" name="rolAdd" required>
+					<option value="0" language="OPERARIO_TEXT">Opérateur</option>
+					<option value="1" language="ADMIN_TEXT">Administrateur</option>
+				</select>
+				<button type="submit" class="addSubmit" language="REGISTRAR_BUTTON">Enregistrer</button>
+				<button type="reset" class="resetSubmit" onclick="showTable();" language="CANCELAR_BUTTON">Annuler</button>
+			</form>
+		</div>
+
+		<!-- Puestos: botones grandes en la pantalla principal -->
+		<div id="PuestosGrid" style="position:absolute; top:72vh; left:860px; transform:translateX(-50%); width:90vw; max-width:1500px; min-width:1500px; display:none; flex-wrap:wrap; gap:88px; justify-content:center; padding:16px;">
+			<button class="puesto-btn" data-puesto="1" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 1</button>
+			<button class="puesto-btn" data-puesto="2" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 2</button>
+			<button class="puesto-btn" data-puesto="3" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 3</button>
+			<button class="puesto-btn" data-puesto="4" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 4</button>
+			<button class="puesto-btn" data-puesto="5" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 5</button>
+			<button class="puesto-btn" data-puesto="6" style="flex:0 1 28%; height:150px; border-radius:18px; font-size:30px; font-weight:700; background:#f0f3f7; border:2px solid #9aa7b2; box-shadow:0 4px 10px rgba(0,0,0,0.15);">Poste 6</button>
+		</div>
+		<div id="table-container" class="table-container" style="display:none">
+			<table id="userTable">
+				<thead>
+					<tr>
+						<th language="TABLE_USER">Utilisateur</th>
+						<th language="TABLE_PASSWORD">Mot de passe</th>
+						<th language="TABLE_ROLE">Rôle</th>
+						<th language="TABLE_LAST_LOGIN">Dernière connexion</th>
+						<th></th>
+						<th></th>
+						<th language="EDIT">Modifier</th>
+						<th language="DELETE">Supprimer</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+		</div>
+		<div id="Apps">
+			<div id="UIDisplay" style="display:none; position: relative;">
+				<button id="UIDisplayClose" title="Cerrar"
+					onclick="window.hideUI()"
+					style="position:absolute; bottom:8px; left:8px; z-index:10001; width:44px; height:44px; border-radius:22px; border:none; background:rgba(0,0,0,0.6); color:#fff; font-size:22px; line-height:44px; text-align:center; cursor:pointer;">
+					 d7
+				</button>
+						<img id="UIDisplayClose" title="Cerrar"
+							src="images/Leavebutton.png"
+							onmouseover="this.src='images/LeavebuttonH.png'"
+							onmouseout="this.src='images/Leavebutton.png'"
+							onclick="window.hideUI()"
+							style="position:absolute; bottom:8px; left:8px; z-index:10001; width:104px; height:104px; cursor:pointer;" />
+				<iframe id="ui1" style="visibility: hidden; width:200%; height:200%"></iframe>
+				<iframe id="ui2" style="visibility: hidden;"></iframe>
+				<iframe id="ui3" style="visibility: hidden;"></iframe>
+				<iframe id="ui4" style="visibility: hidden;"></iframe>
+				<iframe id="ui5" style="visibility: hidden;"></iframe>
+				<iframe id="ui6" style="visibility: hidden;"></iframe>
+				<iframe id="ui7" style="visibility: hidden;"></iframe>
+				<iframe id="ui8" style="visibility: hidden; z-index: 1;"></iframe>
+				<iframe id="ui9" style="visibility: hidden;"></iframe>
+				<iframe id="ui10" style="visibility: hidden;"></iframe>
+				<iframe id="ui11" style="visibility: hidden;"></iframe>
+				<iframe id="ui12" style="visibility: hidden;"></iframe>
+				<iframe id="ui13" style="visibility: hidden;"></iframe>
+				<iframe id="ui14" style="visibility: hidden;"></iframe>
+			</div>
+			<!-- Host independiente para UI15, fuera de UIDisplay -->
+			<div id="UI15Host" style="display:none; position:fixed; inset:0; z-index:9999; background:#000;">
+				<img id="UI15Close" title="Cerrar"
+					 src="images/Leavebutton.png"
+					 onmouseover="this.src='images/LeavebuttonH.png'"
+					 onmouseout="this.src='images/Leavebutton.png'"
+					 onclick="(function(){
+						var host=document.getElementById('UI15Host');
+						var f=document.getElementById('ui15');
+						if(f){f.style.visibility='hidden';}
+						if(host){host.style.display='none';}
+					 })()"
+					 style="position:absolute; bottom:8px; left:8px; z-index:10001; width:44px; height:44px; cursor:pointer;" />
+				<iframe id="ui15" style="position:absolute; left:0; top:0; border: 0px; background: transparent; visibility: visible; display: block; z-index: 2; width:1950px; height:1000px;"></iframe>
+			</div>
+		</div>
+		<div id="DshKeyboard" class="keyboard keyboard--hidden"></div>
+		
+		<script>
+			// comportamiento básico: marcar puesto seleccionado; el showUI lo conectamos después
+			(function(){
+				var grid = document.getElementById('PuestosGrid');
+				if (!grid) return;
+				grid.addEventListener('click', function(e){
+					var btn = e.target.closest('.puesto-btn');
+					if (!btn) return;
+					var puesto = btn.getAttribute('data-puesto');
+					window.puestoSeleccionado = puesto;
+					// feedback visual sencillo
+					Array.from(grid.querySelectorAll('.puesto-btn')).forEach(function(b){
+						b.style.background = '#f0f3f7';
+						b.style.borderColor = '#9aa7b2';
+					});
+					btn.style.background = '#dff0ff';
+					btn.style.borderColor = '#3aa0ff';
+					// abrir UI según puesto: UI1..UI6
+					if (window.UIController && typeof window.UIController.showUI === 'function') {
+						window.UIController.showUI(puesto);
+					}
+				});
+			})();
+		</script>
+	</body>
+</html>

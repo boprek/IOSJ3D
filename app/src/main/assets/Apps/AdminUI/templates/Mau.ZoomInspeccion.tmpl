@@ -1,0 +1,263 @@
+<div class="InfoZoom" style="position:relative;top:30px;left:98px;z-index:10001;">
+	<text id = "UltRelai" class="DatoZoom" style="position:absolute;top:6px;left:20px">Relai %%relai%%</text>
+	<text id = "UltVis" class="DatoZoom"   style="position:absolute;top:6px;left:125px">Vis %%vis%%</text>
+	<text id = "UltModelo" class="DatoZoom" style="position:absolute;top:6px;left:276px">Modèle %%modelo%%.%%variante%% (%%codigo_modelo%%)</text>
+	<text id = "UltColor1" class="DatoZoom" style="position:absolute;top:6px;left:466px">(%%codigo_color1%%) %%color1%%</text>
+	<div  id="UltColorWeb1" class="ColorWebZoom" style="position:absolute;top:3px;left:435px;background-color:#%%color_web1%%"></div>
+	<text id = "UltColor2" class="DatoZoom" style="position:absolute;top:6px;left:688px;display:%%biton%%">(%%codigo_color2%%) %%color2%%</text>
+	<div  id="UltColorWeb2" class="ColorWebZoom" style="position:absolute;top:3px;left:660px;background-color:#%%color_web2%%;display:%%biton%%"></div>
+	<text id = "UltPais"   class="DatoZoom" style="position:absolute;top:6px;left:920px">Pays %%pais%%</text>
+	<text id = "UltFecha"     class="DatoZoom" style="position:absolute;top:6px;left:1172px">Date %%fecha%%</text>
+	<!-- Hidden inspection id for WS payloads (UI4 parity) -->
+	<text id="IdInsp" style="display:none">%%id_inspeccion%%</text>
+</div>
+<div class="ImagenZoom" id="cuerpo" style="position:relative;top:50px;left:140px;z-index:10001;">
+	<svg xmlns="http://www.w3.org/2000/svg" version="1.0" width="1248" height="702">
+		<g transform="translate(0,0)  rotate(0,0,0) scale(0.65)">
+			%%svg_zona%%
+		</g>
+	</svg>
+</div>
+<img id="boton_cerrar" style="z-index:2;position:absolute;top:3px; left:1487px;" onclick="AdminUI.cerrarZoom()"></img>
+<img id ="boton_imprimir" type="button" style="position:absolute; top:800px; left:743px" onclick="AdminUI.imprimir(%%id_inspeccion%%);"></img>
+<img id ="boton_guardar" type="button" style="position:absolute; top:800px; left:793px" onclick="AdminUI.guardar(%%id_inspeccion%%);"></img>
+
+<script>
+// Exponer un handler global para los grupos de zona dentro del SVG (UI 2/UI 4)
+(function(){
+	// Handler mínimo: solo loguea y evita bubbling excesivo
+	function clickOnZone(e, zone){
+		try{
+			if(e && e.stopPropagation) e.stopPropagation();
+		}catch(_){ }
+		console.log('[Zoom:Mau] clickOnZone => zone', zone, 'coords', {offsetX: e && e.offsetX, offsetY: e && e.offsetY});
+	}
+	// Publicar en window para llamadas inline desde el SVG
+	window.clickOnZone = clickOnZone;
+})();
+</script>
+<!-- Controls to add/repair defects in Zoom (UI4/UI2 parity) -->
+<button id="btnAsignarZoom" onclick="asignarDefecto()"
+		style="position:fixed; bottom:24px; left:24px; z-index:10002; background:#2e7d32; color:#fff; font-size:18px; padding:10px 14px; border-radius:12px; border:2px solid #fff; box-shadow:0 6px 16px rgba(0,0,0,.35);">ALOCARE</button>
+<button id="btnModoZoom" onclick="changeMode()"
+		style="position:fixed; bottom:24px; left:150px; width:48px; height:48px; z-index:10002; border:2px solid #fff; border-radius:12px; background:#222; box-shadow:0 6px 16px rgba(0,0,0,.35); color:#fff;">R</button>
+
+<script>
+(function(){
+	let modo='reparacion';
+	let DATA={id:0, subcat:0, reparado:false, x:0, y:0, zone:0};
+	const SUBCATS=['0 SIN SUBCATEGORIA','1 SUCIEDAD','2 CRATER','3 VERRUGA','4 RESTO SELLADO','5 DESCOLGADO','6 GOTA','7 FIBRA','8 HERVIDOS','9 HUELLA LIJA','10 HUELLA PULIDO TRAPO','11 MARCA AGUA','12 ACEITE','13 GOTA DISOLVENTE','14 ARAÑAZO RAYAS','15 MANCHAS','16 ABOLLADURA','17 PROYECCION SOLDADURA','18 PROYECCION ANTIGRAVA','19 CORDON','20 COULURE','21 ESPOLVOREADO','22 TONALIDAD','23 BASE ESCASA','24 LACA ESCASA','25 SIN CUBRIR','26 PIEL NARANJA','27 LINEA CORTE BITONO','28 DESCONCHADO','29 ATTAQUE ELE','30 ASPECT CATA','31 REPARACION DEFICIENTE','32 PINHOLES','33 RESTO'];
+
+	function sendDas(payload){
+		try{
+			if(window.WS && typeof window.WS.send==='function'){
+				const msg = (typeof payload==='string')? payload : JSON.stringify(payload);
+				window.WS.send(msg);
+				return;
+			}
+		}catch(_){ }
+		console.warn('[Zoom] WS no disponible', payload);
+	}
+
+	function svgPoint(evt){ const svg=evt.currentTarget.closest('svg'); const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY; const m=svg.getScreenCTM().inverse(); const p=pt.matrixTransform(m); return {x:Math.round(p.x/0.65), y:Math.round(p.y/0.65)}; }
+	function onSvgClick(e){
+		e.stopPropagation();
+		// Mostrar el VIS al hacer click en la imagen/zonas
+		try{
+			const visRaw=(document.getElementById('UltVis')||{}).textContent||'';
+			const vis=visRaw.replace(/^\s*Vis\s*/i,'').trim();
+			console.log('[Zoom] VIS:', vis||visRaw);
+			// Toast efímero cerca del click
+			const toast=document.createElement('div');
+			toast.textContent = 'VIS: ' + (vis||visRaw);
+			toast.style.cssText='position:fixed;z-index:10004;background:rgba(0,0,0,.8);color:#fff;padding:6px 10px;border-radius:8px;font-size:14px;pointer-events:none;opacity:0;transition:opacity .15s ease, transform .15s ease;transform:translateY(-4px);';
+			document.body.appendChild(toast);
+			const cx = Math.min(window.innerWidth-160, Math.max(10, e.clientX+12));
+			const cy = Math.min(window.innerHeight-40, Math.max(10, e.clientY-10));
+			toast.style.left = cx+'px';
+			toast.style.top  = cy+'px';
+			requestAnimationFrame(()=>{ toast.style.opacity='1'; toast.style.transform='translateY(0)'; });
+			setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateY(-4px)'; setTimeout(()=>toast.remove(),180); }, 1200);
+		}catch(_){ }
+		if(modo==='borrado'){
+			const pt=svgPoint(e);
+			sendDas({info:'DefectoTactil', idInsp:(document.getElementById('IdInsp')||{}).textContent||'%%id_inspeccion%%', model:'%%modelo%%', x:String(pt.x), y:String(pt.y), zone:String(window.zona_zoom||0), subCat:'0', size:'0', weight:'0', repaired:'0', deleted:'1', username:(localStorage.getItem('username')||''), uiValue:String(window.uiValue||'1')});
+			return;
+		}
+		const pt=svgPoint(e);
+		DATA.x=pt.x; DATA.y=pt.y; DATA.zone=(window.zona_zoom||0);
+		const b=document.getElementById('btnAsignarZoom'); if(b){ b.style.transform='scale(1.06)'; setTimeout(()=>b.style.transform='',180); }
+		// Disparar también el handler clickOnZone para que aparezca tu console.log
+		try{ if(window.clickOnZone){ window.clickOnZone(e, (window.zona_zoom||0)); } }catch(_){ }
+	}
+	const svg=document.querySelector('.ImagenZoom svg'); if(svg){ svg.addEventListener('click', onSvgClick); }
+
+	// Delegación: capturar clicks en grupos de zona y disparar clickOnZone
+	(function attachZoneDelegation(){
+		const root=document.querySelector('.ImagenZoom');
+		if(!root) return;
+		root.addEventListener('click', function(ev){
+			const g = ev.target.closest && ev.target.closest('g');
+			if(!g) return; // not inside a group
+			// Buscar clase tipo zone0N en el grupo o ancestros
+			let zone = null;
+			const cls = (g.getAttribute('class')||'');
+			const m = cls.match(/zone0(\d+)/);
+			if(m){ zone = parseInt(m[1],10); }
+			else{
+				// intentar en ancestros
+				const z = g.closest('[class*="zone0"]');
+				if(z){ const c2 = z.getAttribute('class')||''; const m2=c2.match(/zone0(\d+)/); if(m2) zone=parseInt(m2[1],10); }
+			}
+			if(zone!=null){
+				try{ window.clickOnZone && window.clickOnZone(ev, zone); }catch(e){}
+			}
+		}, true);
+	})();
+
+	// ===== UI4 parity functions =====
+	window.changeMode=function(){ modo = (modo==='borrado')? 'reparacion':'borrado'; const b=document.getElementById('btnModoZoom'); if(b){ b.textContent=(modo==='reparacion')? 'R':'X'; b.style.background=(modo==='reparacion')? '#222':'#3d2f2f'; } };
+
+	function ShowDefect(div,e,d){
+		if(modo==='borrado'){ if(div && typeof div.getAttribute==='function'){ deleteDefect(div); } return; }
+		if(div && typeof div==='object' && div instanceof Event){ e=div; div=e.currentTarget||e.target; }
+		if(!div || typeof div.getAttribute!=='function'){ if(e && e.currentTarget && typeof e.currentTarget.getAttribute==='function'){ div=e.currentTarget; } else { return; } }
+		try{ e=e||window.event; if(e && e.stopPropagation) e.stopPropagation(); }catch(_){ }
+		if(DATA.target && DATA.target!==div && !DATA.modified){ DATA.target.style.outline='none'; }
+		if(!d || typeof d!=='object'){
+			const g = div.closest? div.closest('g'):null;
+			if(g){ const idText=g.querySelector('text.id, text[class="id"]'); const typeText=g.querySelector('text.type, text[class="type"]'); d={ id: idText? parseInt(idText.textContent.trim(),10):0, type: typeText? parseInt(typeText.textContent.trim(),10):0, x:0,y:0,zone:0,weight:0,size:0}; }
+			else { d={id:0,type:0,x:0,y:0,zone:0,weight:0,size:0}; }
+		}
+		const reparadoAttr=div.getAttribute('reparado');
+		const subcatAttr=div.getAttribute('subcat');
+		DATA={ id:d.id||0, new:0, subcat: subcatAttr!=null?subcatAttr:(d.type||0), reparado:(reparadoAttr==='true')||false, x:d.x||0, y:d.y||0, zone:d.zone||0, weight:d.weight||0, size:d.size||0, target:div, modified:false };
+		div.style.outline='2px solid #ffeb3b';
+		const btnAsignar=document.getElementById('btnAsignarZoom'); if(btnAsignar) btnAsignar.style.display='block';
+		try{
+			const idInsp=(document.getElementById('IdInsp')||{}).textContent||'';
+			let xabs=d.x||0, yabs=d.y||0;
+			if(typeof d.zone==='number'){
+				const zoneEl=document.querySelector('.zone0'+d.zone);
+				if(zoneEl && zoneEl.transform && zoneEl.transform.animVal){
+					const transforms=zoneEl.transform.animVal;
+					for(let i=transforms.length-1;i>=0;i--){ const t=transforms[i].matrix; const ndx=t.d * xabs + t.c * yabs + t.e; const ndy=t.b * xabs + t.a * yabs + t.f; xabs=ndx; yabs=ndy; }
+				}
+			}
+			const username=localStorage.getItem('username')||'';
+			const data={ new:'0', info:'DefectoTactil', model:'%%modelo%%', idInsp:idInsp, weight:(d.weight||0).toString(), size:(d.size||0).toString(), subCat:DATA.subcat.toString(), x:(d.x||0).toString(), y:(d.y||0).toString(), zone:(d.zone||0).toString(), xabs:xabs.toString(), yabs:yabs.toString(), target:DATA.target? DATA.target.toString():'', modified:DATA.modified? '1':'0', repaired:DATA.reparado? '1':'0', hayMas:'0', deleted:'0', username:username, uiValue:String(window.uiValue||'1') };
+			sendDas(data);
+		}catch(err){ console.error('[Zoom] ShowDefect payload error',err); }
+	}
+
+	function asignarDefecto(){
+		if(document.getElementById('subcatOverlay')) return;
+		const overlay=document.createElement('div'); overlay.id='subcatOverlay'; overlay.style.cssText='position:fixed;inset:0;z-index:10003;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:flex-start;padding:20px;padding-left:1%';
+		const modal=document.createElement('div'); modal.style.cssText='width:60%;max-width:840px;max-height:80vh;background:#1e1e1e;color:#fff;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.6);display:flex;flex-direction:column;';
+		const header=document.createElement('div'); header.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #333;font-weight:bold;font-size:20px;'; header.innerHTML='<span>Selecciona subcategoría</span><button id="closeSubcat" style="background:#b33;color:#fff;border:0;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:14px;">Cerrar</button>';
+		modal.appendChild(header);
+		const gridWrapper=document.createElement('div'); gridWrapper.style.cssText='flex:1;overflow:auto;padding:16px 20px;';
+		const grid=document.createElement('div'); grid.id='subcatPanel'; grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;';
+		SUBCATS.forEach(txt=>{ const parts=txt.split(' '); const id=parts[0]; const label=parts.slice(1).join(' '); const btn=document.createElement('button'); btn.textContent=id+' '+label; btn.dataset.id=id; btn.style.cssText='background:#394049;color:#fff;border:0;padding:10px 8px;border-radius:8px;cursor:pointer;font-size:12px;min-height:52px;display:flex;align-items:center;justify-content:center;line-height:1.2;'; btn.onclick=()=>{ DATA.subcat=parseInt(id,10); document.querySelectorAll('#subcatPanel [data-id],#subcatPanel button').forEach(b=>b.style.background='#394049'); btn.style.background='#2e7d32'; }; grid.appendChild(btn); });
+		gridWrapper.appendChild(grid);
+		const repTog=document.createElement('div'); repTog.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 20px;color:#ccc;'; repTog.innerHTML='<span>Reparado:</span><button id="toggleRep" style="background:#555;color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer">No</button>';
+		let marcadoReparado=false;
+		const footer=document.createElement('div'); footer.style.cssText='display:flex;gap:12px;padding:14px 20px;border-top:1px solid #333;'; footer.innerHTML='<button id="confirmSubcat" style="flex:1;background:#1976d2;color:#fff;border:0;padding:12px;border-radius:8px;font-size:16px;cursor:pointer">Aplicar</button><button id="cancelSubcat" style="flex:1;background:#555;color:#fff;border:0;padding:12px;border-radius:8px;font-size:16px;cursor:pointer">Cancelar</button>';
+		modal.appendChild(repTog); modal.appendChild(gridWrapper); modal.appendChild(footer); overlay.appendChild(modal); document.body.appendChild(overlay);
+		document.getElementById('closeSubcat').onclick=()=>overlay.remove();
+		document.getElementById('cancelSubcat').onclick=()=>overlay.remove();
+		document.getElementById('toggleRep').onclick=()=>{ marcadoReparado=!marcadoReparado; const b=document.getElementById('toggleRep'); b.textContent=marcadoReparado?'Sí':'No'; b.style.background=marcadoReparado?'#2e7d32':'#555'; };
+		document.getElementById('confirmSubcat').onclick=()=>{
+			try{
+				const sel=window.defectosSeleccionados||[];
+				const idInsp=(document.getElementById('IdInsp')||{}).textContent||'';
+				let username=localStorage.getItem('username')||'';
+				sel.forEach((defecto,idx)=>{
+					if(DATA && DATA.subcat!=null){ defecto.subcat=DATA.subcat; }
+					defecto.reparado=!!marcadoReparado;
+					const div=document.createElement('div'); div.style='position:absolute;z-index:1;'; div.style.left=(parseInt(defecto.xabs,10)-10)+'px'; div.style.top=(parseInt(defecto.yabs,10)-10)+'px'; const cdiv=document.createElement('div'); cdiv.style='width:20px;height:20px;border-radius:50%;background-color:yellow;'; div.appendChild(cdiv); if(defecto.reparado){ div.style.outline='solid green'; }
+					div.setAttribute('subcat', defecto.subcat); div.setAttribute('reparado', defecto.reparado? 'true':'false'); div.setAttribute('data-new','1');
+					let obj="{\\'id\\':0,\\'weight\\':\\'--\\',\\'size\\':\\'--\\',\\'type\\':"+defecto.subcat+",\\'x\\':"+defecto.x+",\\'y\\':"+defecto.y+",\\'zone\\':"+defecto.zone+",\\'new\\':\\'1\\',\\'repaired\\':"+(defecto.reparado? 'true':'false')+"}";
+					div.setAttribute('onclick',"AdminUI.ShowDefect(this,event,"+obj+")");
+					document.getElementById('cuerpo').appendChild(div);
+					defecto.target=div;
+					const data={ new:'1', info:'DefectoTactil', model:'%%modelo%%', idInsp:idInsp, weight:(defecto.weight||0).toString(), size:(defecto.size||0).toString(), subCat:(defecto.subcat||0).toString(), x:(defecto.x||0).toString(), y:(defecto.y||0).toString(), zone:(defecto.zone||0).toString(), xabs:(defecto.xabs||0).toString(), yabs:(defecto.yabs||0).toString(), target:defecto.target? defecto.target.toString():'', modified:'0', repaired:defecto.reparado? '1':'0', hayMas:(idx < sel.length-1 ? '1':'0'), deleted:'0', username:username, uiValue:String(window.uiValue||'1') };
+					sendDas(data);
+				});
+			}finally{
+				overlay.remove(); if(typeof window.eliminarDivsSeleccionados==='function'){ window.eliminarDivsSeleccionados(); }
+				const btnAsignar=document.getElementById('btnAsignarZoom'); if(btnAsignar){ btnAsignar.style.display='none'; }
+			}
+		};
+		overlay.addEventListener('click',ev=>{ if(ev.target===overlay) overlay.remove(); });
+	}
+
+	function deleteDefect(el){
+		try{
+			let g = el.closest? el.closest('g'):null; let d={id:0,type:0,x:0,y:0,zone:0,weight:0,size:0};
+			if(g){ const idText=g.querySelector('text.id, text[class=\"id\"]'); const typeText=g.querySelector('text.type, text[class=\"type\"]'); if(idText) d.id=parseInt(idText.textContent.trim(),10)||0; if(typeText) d.type=parseInt(typeText.textContent.trim(),10)||0; }
+			const reparadoAttr=el.getAttribute('reparado');
+			const subcatAttr=el.getAttribute('subcat');
+			const subCat = subcatAttr!=null? parseInt(subcatAttr,10): (d.type||0);
+			const reparado = (reparadoAttr==='true');
+			let xabs=d.x||0; let yabs=d.y||0;
+			if(typeof d.zone==='number'){
+				const zoneEl=document.querySelector('.zone0'+d.zone);
+				if(zoneEl && zoneEl.transform && zoneEl.transform.animVal){
+					const transforms=zoneEl.transform.animVal;
+					for(let i=transforms.length-1;i>=0;i--){ const t=transforms[i].matrix; const ndx=t.d * xabs + t.c * yabs + t.e; const ndy=t.b * xabs + t.a * yabs + t.f; xabs=ndx; yabs=ndy; }
+				}
+			}
+			const idInsp=(document.getElementById('IdInsp')||{}).textContent||'';
+			const username=localStorage.getItem('username')||'';
+			const payload={ new:'0', info:'DefectoTactil', model:'%%modelo%%', idInsp:idInsp, weight:(d.weight||0).toString(), size:(d.size||0).toString(), subCat:subCat.toString(), x:(d.x||0).toString(), y:(d.y||0).toString(), zone:(d.zone||0).toString(), xabs:xabs.toString(), yabs:yabs.toString(), target:el.toString(), modified:'0', repaired:reparado? '1':'0', hayMas:'0', deleted:'1', username:username, uiValue:String(window.uiValue||'1') };
+			sendDas(payload);
+			el.remove();
+		}catch(err){ console.error('[Zoom] deleteDefect error',err); }
+	}
+
+	function saveDefect(){
+		const idInsp=(document.getElementById('IdInsp')||{}).textContent||'';
+		let xabs=DATA.x||0; let yabs=DATA.y||0;
+		if(typeof DATA.zone==='number'){
+			const zoneEl=document.querySelector('.zone0'+DATA.zone);
+			if(zoneEl && zoneEl.transform && zoneEl.transform.animVal){
+				const transforms=zoneEl.transform.animVal;
+				for(let i=transforms.length-1;i>=0;i--){ const t=transforms[i].matrix; const ndx=t.d * xabs + t.c * yabs + t.e; const ndy=t.b * xabs + t.a * yabs + t.f; xabs=ndx; yabs=ndy; }
+			}
+		}
+		const username=localStorage.getItem('username')||'';
+		const data={ new: DATA.new? '1':'0', info: 'DefectoTactil', model: '%%modelo%%', idInsp: idInsp, weight: (DATA.weight||0).toString(), size: (DATA.size||0).toString(), subCat: DATA.subcat!=null? DATA.subcat.toString():'0', x: (DATA.x||0).toString(), y: (DATA.y||0).toString(), zone: (DATA.zone||0).toString(), xabs: xabs.toString(), yabs: yabs.toString(), target: DATA.target? DATA.target.toString():'', modified: '1', repaired: DATA.reparado? '1':'0', hayMas: '0', deleted: '0', username: username, uiValue: String(window.uiValue||'1') };
+		sendDas(data);
+		if(DATA.target){ DATA.target.style.outline='2px solid #4caf50'; DATA.target.setAttribute('subcat',DATA.subcat); }
+		DATA.modified=true; closeDefect(true);
+	}
+
+	function closeDefect(keep){ const panel=document.getElementById('panelDefecto'); if(panel) panel.remove(); const overlay=document.getElementById('panelDefectoOverlay'); if(overlay) overlay.remove(); if(DATA.target && !keep){ DATA.target.style.outline='none'; } const btnAsignar=document.getElementById('btnAsignarZoom'); if(btnAsignar && !keep){ btnAsignar.style.display='none'; } }
+
+	window.defectosSeleccionados = window.defectosSeleccionados || [];
+	function clickOnZone(e,zone){
+		console.log("hola");
+		if(modo==='selecAll'){ if(typeof window.legacy_clickOnZone==='function'){ return window.legacy_clickOnZone(e, zone); } return; }
+		if(modo==='borrado') return;
+		if(DATA.target && !DATA.modified){ DATA.target.style.outline='none'; }
+		if(typeof window.isOpaque==='function'){ if(!window.isOpaque(e.offsetX,e.offsetY,zone)) return; }
+		let dx=e.offsetX, dy=e.offsetY, ndx=dx, ndy=dy;
+		const divzona=document.getElementsByClassName('zone0'+zone);
+		if(divzona && divzona[0] && divzona[0].transform && divzona[0].transform.animVal){ const transforms=divzona[0].transform.animVal; for(let i=0;i<transforms.length;i++){ const t=transforms[i].matrix.inverse(); ndx=t.d*dx + t.c*dy + t.e; ndy=t.b*dx + t.a*dy + t.f; dx=ndx; dy=ndy; } }
+		DATA={ id:0, new:1, subcat:0, reparado:false, x:Math.round(dx), y:Math.round(dy), zone:zone, weight:'--', size:'--', target:null, modified:false };
+		const prev=document.createElement('div'); prev.style='position:absolute;outline:solid;z-index:1'; prev.style.left=(e.offsetX-10)+'px'; prev.style.top=(e.offsetY-10)+'px'; prev.style.width='10px'; prev.style.height='10px'; prev.style.opacity='0.5'; prev.style.borderRadius='20%'; prev.style.backgroundColor='gray'; document.getElementById('cuerpo').appendChild(prev);
+		window.defectosSeleccionados.push({ new:1, id:0, weight:'--', size:'--', subcat:0, x:Math.round(dx), y:Math.round(dy), zone:zone, xabs:e.offsetX, yabs:e.offsetY, target:null, modified:false, reparado:false, pointer:prev });
+		const btnAsignar=document.getElementById('btnAsignarZoom'); if(btnAsignar){ btnAsignar.style.display='block'; }
+	}
+
+	function selecAll(){ modo = modo==='selecAll'?'reparacion':'selecAll'; }
+	function changeRepair(){ DATA.reparado=!DATA.reparado; if(DATA.target){ DATA.target.setAttribute('reparado',DATA.reparado?'true':'false'); DATA.target.style.filter=DATA.reparado?'hue-rotate(80deg) brightness(1.2)':'none'; } }
+	window.eliminarDivsSeleccionados = function(){ (window.defectosSeleccionados||[]).forEach(defecto=>{ if(defecto.pointer && defecto.pointer.parentNode){ defecto.pointer.parentNode.removeChild(defecto.pointer); } }); window.defectosSeleccionados=[]; };
+
+	// Expose APIs (UI4/UI2 parity)
+	window.AdminUI = Object.assign({}, window.AdminUI||{}, { ShowDefect, saveDefect, clickOnZone, asignarDefecto, changeMode, selecAll });
+	window.ShowDefect=ShowDefect; window.saveDefect=saveDefect; window.clickOnZone=clickOnZone; window.asignarDefecto=asignarDefecto; window.changeMode=window.changeMode; window.selecAll=selecAll;
+})();
+</script>
+
