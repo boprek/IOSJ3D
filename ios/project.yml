@@ -6,6 +6,21 @@ targets:
     platform: iOS
     type: application
     deploymentTarget: "15.0"
+    preBuildScripts:
+      - name: Copy web assets
+        script: |
+          set -euo pipefail
+          SRC1="${PROJECT_DIR}/../app/src/main/assets"
+          SRC2="${PROJECT_DIR}/../das/Dashboard"
+          DST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
+          echo "Copying assets from ${SRC1} -> ${DST}/assets"
+          rm -rf "${DST}/assets"
+          mkdir -p "${DST}/assets"
+          cp -R "${SRC1}/." "${DST}/assets/"
+          echo "Copying dashboard from ${SRC2} -> ${DST}/Dashboard"
+          rm -rf "${DST}/Dashboard"
+          mkdir -p "${DST}/Dashboard"
+          cp -R "${SRC2}/." "${DST}/Dashboard/"
     sources:
       - path: Sources
     resources:
