@@ -11,6 +11,8 @@ targets:
     resources:
       - path: ../app/src/main/assets
         type: folder
+      - path: ../das/Dashboard
+        type: folder
     info:
       path: Info.plist
     settings:
