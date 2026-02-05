@@ -20,6 +20,9 @@ struct WebContainer: UIViewRepresentable {
         wv.scrollView.bounces = false
         wv.backgroundColor = .black
         wv.isOpaque = false
+        if #available(iOS 16.4, *) {
+            wv.isInspectable = true // Permite ver el WKWebView en Safari Develop
+        }
         return wv
     }()
 
