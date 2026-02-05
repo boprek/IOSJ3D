@@ -1,0 +1,22 @@
+name: J3DDashboard
+options:
+  createIntermediateGroups: true
+targets:
+  J3DDashboard:
+    platform: iOS
+    type: application
+    deploymentTarget: "15.0"
+    sources:
+      - path: Sources
+    resources:
+      - path: ../app/src/main/assets
+        type: folder
+    info:
+      path: Info.plist
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.j3d.dashboard.ios
+      SWIFT_VERSION: 5.0
+      IPHONEOS_DEPLOYMENT_TARGET: 15.0
+      CODE_SIGN_STYLE: Automatic
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      # Rellena DEVELOPMENT_TEAM si vas a firmar con tu cuenta en Xcode o en CI.
