@@ -35,12 +35,14 @@ struct WebContainer: UIViewRepresentable {
         } else {
             let attemptsHtml = search.attempts.joined(separator: "<br>")
             let htmls = search.htmls.joined(separator: "<br>")
+            let dirs = search.dirs.joined(separator: "<br>")
             let message = """
             <div style='font-family:Helvetica;padding:16px;color:#c00'>
             <h2>No se encontró J3DDashBoard.html en el bundle</h2>
-            <div style='color:#000;font-size:14px'>Bundle: \(search.bundlePath)<br>Resources: \(search.resourcePath)</div>
-            <div style='color:#000;font-size:14px'>Intentos:<br><pre style='white-space:pre-wrap'>\(attemptsHtml)</pre></div>
-            <div style='color:#000;font-size:14px'>HTMLs detectados:<br><pre style='white-space:pre-wrap'>\(htmls)</pre></div>
+            <div style='color:#000;font-size:13px'>Bundle: \(search.bundlePath)<br>Resources: \(search.resourcePath)</div>
+            <div style='color:#000;font-size:13px'>Intentos:<br><pre style='white-space:pre-wrap'>\(attemptsHtml)</pre></div>
+            <div style='color:#000;font-size:13px'>Dirs en resource root:<br><pre style='white-space:pre-wrap'>\(dirs)</pre></div>
+            <div style='color:#000;font-size:13px'>HTMLs detectados (top \(search.htmls.count)):<br><pre style='white-space:pre-wrap'>\(htmls)</pre></div>
             </div>
             """
             webView.loadHTMLString(message, baseURL: nil)
@@ -54,7 +56,7 @@ struct WebContainer: UIViewRepresentable {
         Coordinator(webView: webView)
     }
 
-    private func locateDashboardHTML() -> (url: URL?, root: URL?, attempts: [String], htmls: [String], bundlePath: String, resourcePath: String) {
+    private func locateDashboardHTML() -> (url: URL?, root: URL?, attempts: [String], htmls: [String], dirs: [String], bundlePath: String, resourcePath: String) {
         let bundlePath = Bundle.main.bundlePath
         let resourcePath = Bundle.main.resourcePath ?? "<nil>"
         var attempts: [String] = []
@@ -66,6 +68,9 @@ struct WebContainer: UIViewRepresentable {
             ("J3DDashBoard", "html", "app"),
             ("J3DDashBoard", "html", "Dashboard"),
             ("J3DDashBoard", "html", "das/Dashboard"),
+            ("J3DDashBoard", "HTML", nil),
+            ("j3ddashboard", "html", nil),
+            ("J3DDashboard", "html", nil),
         ]
 
         let fm = FileManager.default
@@ -78,7 +83,7 @@ struct WebContainer: UIViewRepresentable {
                 if let url = Bundle.main.url(forResource: c.name, withExtension: c.ext, subdirectory: c.sub) {
                     let root = url.deletingLastPathComponent()
                     NSLog("[Bundle] J3DDashBoard.html found at %@ (root=%@)", url.path, root.path)
-                    return (url, root, attempts, [], bundlePath, resourcePath)
+                    return (url, root, attempts, [], listDirs(resourceURL: resourceURL), bundlePath, resourcePath)
                 }
             }
         }
@@ -88,14 +93,27 @@ struct WebContainer: UIViewRepresentable {
             if let enumerator = fm.enumerator(at: resourceURL, includingPropertiesForKeys: nil) {
                 for case let url as URL in enumerator where url.pathExtension.lowercased() == "html" {
                     foundHtmls.append(url.path.replacingOccurrences(of: resourcePath + "/", with: ""))
+                    if foundHtmls.count >= 200 { break } // limit noise
                 }
             }
         }
-        NSLog("[Bundle] J3DDashBoard.html NOT found. Bundle=%@ resource=%@ attempts=%@ htmlCount=%d", bundlePath, resourcePath, attempts.joined(separator: " | "), foundHtmls.count)
+        NSLog("[Bundle] J3DDashBoard.html NOT found. Bundle=%@ resource=%@ attempts=%@ htmlCount=%d dirs=%@",
+              bundlePath,
+              resourcePath,
+              attempts.joined(separator: " | "),
+              foundHtmls.count,
+              listDirs(resourceURL: Bundle.main.resourceURL).joined(separator: ","))
         if !foundHtmls.isEmpty {
             NSLog("[Bundle] HTML sample: %@", foundHtmls.prefix(10).joined(separator: " | "))
         }
-        return (nil, nil, attempts, foundHtmls, bundlePath, resourcePath)
+        return (nil, nil, attempts, foundHtmls, listDirs(resourceURL: Bundle.main.resourceURL), bundlePath, resourcePath)
+    }
+
+    private func listDirs(resourceURL: URL?) -> [String] {
+        guard let resourceURL else { return [] }
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(at: resourceURL, includingPropertiesForKeys: nil) else { return [] }
+        return items.prefix(50).map { $0.lastPathComponent }
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
