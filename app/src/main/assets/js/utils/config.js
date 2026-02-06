@@ -98,7 +98,7 @@ export async function loadConfig() {
     config.version = config.version || 'local';
     config.lang = config.lang || 'en';
     // Último recurso: IP conocida de pruebas (ajústala si procede)
-    if (!config.ipServer) config.ipServer = '172.25.16.63:8192';
+    if (!config.ipServer) config.ipServer = '10.3.29.30:8192';
     console.warn('[Config] Usando valores por defecto:', config);
     return true;
 }

@@ -146,7 +146,7 @@ window.AdminUI.abreZoom = function(zona, id_inspeccion, enable) {
 
                     // Configurar uiValue = 15 y pedir UI por HTTP (UI de búsqueda)
                     try { window.uiValue = 15; } catch(_) {}
-                    const base = (window.config && window.config.ipServer) ? window.config.ipServer : '172.25.16.63:8192';
+                    const base = (window.config && window.config.ipServer) ? window.config.ipServer : '10.3.29.30:8192';
                     const url = `http://${base}/UI?vis=${encodeURIComponent(vis)}&uivalue=15`;
                     console.log('[Zoom] Fetching UI via', url);
                     const response = await fetch(url);
