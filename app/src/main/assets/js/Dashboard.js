@@ -200,7 +200,7 @@ if (!window.AdminUI.ActualizaZoom && typeof window.ActualizaZoom === 'function')
 }
 
 async function initDashboard() {
-    console.log("[Dashboard] Arrancando Dashboard");
+    console.log("[Dashboard] Arrancando Dashboard; href=", typeof location!=='undefined'?location.href:'<no-location>');
 
     // cargar Dash.cfg
     const ok = await loadConfig();
@@ -215,7 +215,12 @@ async function initDashboard() {
     console.log("[Dashboard] IP cargada:", config.ipServer);
 
     // conectar WebSocket
-    WS.connect(config.ipServer);
+    try {
+        console.log("[Dashboard] WS.connect ->", config.ipServer);
+        WS.connect(config.ipServer);
+    } catch (e) {
+        console.error("[Dashboard] WS.connect error", e);
+    }
 
     // UI básica
     UIController.displayLogin();
@@ -229,7 +234,7 @@ initDashboard();
 // ======== DOMContentLoaded ========
 document.addEventListener("DOMContentLoaded", async () => {
 
-    console.log("DOMContentLoaded()");
+    console.log("DOMContentLoaded()", { href: typeof location!=='undefined'?location.href:'<no-location>' });
 
     Keyboard.init();
     LoginController.initLoginEvents();

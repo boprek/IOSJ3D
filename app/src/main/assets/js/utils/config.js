@@ -11,6 +11,7 @@ export const config = {
 
 export async function loadConfig() {
     const ruta = "Dash.cfg";
+    console.log(`[Config] loadConfig() start. location=${typeof location!=='undefined'?location.href:'<no-location>'}`);
 
     async function parseText(txt){
         const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -50,9 +51,10 @@ export async function loadConfig() {
                 xhr.onerror = ()=>reject(new Error('XHR error'));
                 xhr.send();
             });
+            console.log(`[Config] XHR(file) len=${txt?.length||0}`);
             if (txt && txt.length) return parseText(txt);
         } catch(e) {
-            console.warn("[Config] XHR(file) falló", e);
+            console.error("[Config] XHR(file) falló", e);
         }
     } else {
         // 1b) Intento con fetch en entornos http(s)
@@ -60,10 +62,11 @@ export async function loadConfig() {
             const response = await fetch(ruta);
             if (response && (response.ok || response.status === 0)) {
                 const txt = await response.text();
+                console.log(`[Config] fetch(${ruta}) ok len=${txt?.length||0}`);
                 if (txt && txt.length) return parseText(txt);
             }
         } catch(e) {
-            // Silenciar error: probaremos XHR
+            console.warn("[Config] fetch falló, probando XHR", e);
         }
     }
 
@@ -87,7 +90,7 @@ export async function loadConfig() {
         });
         if (txt && txt.length) return parseText(txt);
     } catch(e) {
-        // Última oportunidad más abajo
+        console.warn("[Config] XHR(http/https) falló", e);
     }
 
     // 3) Fallback por defecto o localStorage
@@ -100,5 +103,6 @@ export async function loadConfig() {
     // Último recurso: IP conocida de pruebas (ajústala si procede)
     if (!config.ipServer) config.ipServer = '10.3.29.30:8192';
     console.warn('[Config] Usando valores por defecto:', config);
+    console.warn('[Config] location protocol:', typeof location !== 'undefined' ? location.protocol : '<none>');
     return true;
 }
