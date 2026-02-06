@@ -13,7 +13,17 @@
 
 	<script src='js/utils/compress.js'></script>
 	<script src='js/utils/util.js'></script>
-	<script type="module" src='js/Dashboard.js'></script>
+	<script type="module">
+		(async()=>{
+			try {
+				console.log('[Bootstrap] importing js/Dashboard.js');
+				await import('./js/Dashboard.js');
+				console.log('[Bootstrap] Dashboard.js loaded');
+			} catch (e) {
+				console.error('[Bootstrap] Failed to import js/Dashboard.js', e);
+			}
+		})();
+	</script>
 	
 	
 	<body style="overflow-x: hidden;">
