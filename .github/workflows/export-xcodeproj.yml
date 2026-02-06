@@ -1,0 +1,30 @@
+name: Export Xcode Project
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          cd ios
+          xcodegen generate
+
+      - name: Zip Xcode project
+        run: |
+          cd ios
+          ditto -c -k --sequesterRsrc --keepParent J3DDashboard.xcodeproj J3DDashboard.xcodeproj.zip
+
+      - name: Upload Xcode project
+        uses: actions/upload-artifact@v4
+        with:
+          name: J3DDashboard-xcodeproj
+          path: ios/J3DDashboard.xcodeproj.zip
